@@ -1,1 +1,1 @@
-# owenmjames-csc6710-2026-project-1
+# csc6710-2026-project-1
