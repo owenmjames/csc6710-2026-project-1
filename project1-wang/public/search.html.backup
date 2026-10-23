@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Search</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f5f7;
+            margin: 0;
+            padding: 30px 16px;
+        }
+
+        main {
+            max-width: 440px;
+            margin: auto;
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 24px 0;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .tabs button {
+            flex: 1;
+            background: #e8edf5;
+            color: #234;
+        }
+
+        .tabs button.active {
+            background: #205bc2;
+            color: white;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            margin-top: 24px;
+            background: #205bc2;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .message {
+            min-height: 24px;
+            margin-top: 18px;
+        }
+    table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 14px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+th {
+    background: #e8edf5;
+}
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Project 1</h1>
+    <!-- users search area -->
+<section id="search-section">
+    <h2>Search by Username</h2>
+
+    <form id="search-form">
+        <label for="search-username">Username</label>
+        <input
+            id="search-username"
+            name="username"
+            type="text"
+            maxlength="50"
+            placeholder="For example: John"
+            required
+        >
+
+        <button type="submit">Search</button>
+    </form>
+        <hr>
+
+<h2>Search by Name</h2>
+
+<form id="name-search-form">
+    <label for="search-firstname">First Name</label>
+    <input
+        id="search-firstname"
+        name="firstname"
+        type="text"
+        maxlength="50"
+        placeholder="For example: John"
+    >
+
+    <label for="search-lastname">Last Name</label>
+    <input
+        id="search-lastname"
+        name="lastname"
+        type="text"
+        maxlength="50"
+        placeholder="For example: Smith"
+    >
+
+    <p>Enter a first name, a last name, or both.</p>
+
+    <button type="submit">Search by Name</button>
+</form>
+    <p
+        id="search-message"
+        class="message"
+        role="status"
+        aria-live="polite"
+    ></p>
+
+    <div style="overflow-x: auto;">
+        <table id="search-table" hidden>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Salary</th>
+                    <th>Age</th>
+                    <th>Registration Date</th>
+                    <th>Last Sign In</th>
+                </tr>
+            </thead>
+
+            <tbody id="search-results"></tbody>
+        </table>
+    </div>
+</section>
+    </main>
+
+    <script>
+        const registerTab = document.getElementById('show-register');
+        const loginTab = document.getElementById('show-login');
+        const registerSection = document.getElementById('register-section');
+        const loginSection = document.getElementById('login-section');
+
+        const registerForm = document.getElementById('register-form');
+        const loginForm = document.getElementById('login-form');
+
+        const registerMessage = document.getElementById('register-message');
+        const loginMessage = document.getElementById('login-message');
+
+       
+        // show response area according the name
+function showPanel(panel) {
+    const panels = ['register', 'login', 'search'];
+
+    panels.forEach((name) => {
+        const section = document.getElementById(name + '-section');
+        const tab = document.getElementById('show-' + name);
+        const selected = name === panel;
+
+        section.hidden = !selected;
+        tab.classList.toggle('active', selected);
+        tab.setAttribute('aria-pressed', String(selected));
+    });
+}
+
+        registerTab.addEventListener('click', () => {
+            showPanel('register');
+        });
+
+        loginTab.addEventListener('click', () => {
+            showPanel('login');
+        });
+
+        // the function used by register and signin
+        async function sendRequest(url, data) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const contentType =
+                response.headers.get('content-type') || '';
+
+            if (!contentType.includes('application/json')) {
+                throw new Error('Unexpected server response');
+            }
+
+            const result = await response.json();
+
+            return {
+                ok: response.ok,
+                result: result
+            };
+        }
+
+        // manage register
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const button = registerForm.querySelector(
+                'button[type="submit"]'
+            );
+
+            button.disabled = true;
+            registerMessage.style.color = '#333';
+            registerMessage.textContent = 'Registering...';
+
+            const data = {
+                username: registerForm.elements.username.value.trim(),
+                password: registerForm.elements.password.value,
+                firstname: registerForm.elements.firstname.value.trim(),
+                lastname: registerForm.elements.lastname.value.trim(),
+                salary: Number(registerForm.elements.salary.value),
+                age: Number(registerForm.elements.age.value)
+            };
+
+            try {
+                const { ok, result } = await sendRequest(
+                    '/api/register',
+                    data
+                );
+
+                registerMessage.style.color = ok ? 'green' : 'red';
+                registerMessage.textContent = result.message;
+
+                if (ok) {
+                    registerForm.reset();
+
+                    // putnew users name in signin table，not copy password
+                    loginForm.elements.username.value = data.username;
+                    loginForm.elements.password.value = '';
+                    loginMessage.textContent = '';
+                }
+            } catch (error) {
+                registerMessage.style.color = 'red';
+                registerMessage.textContent =
+                    'Unable to register. Check the server.';
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        // manage sign in  
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const button = loginForm.querySelector(
+                'button[type="submit"]'
+            );
+
+            button.disabled = true;
+            loginMessage.style.color = '#333';
+            loginMessage.textContent = 'Signing in...';
+
+            const data = {
+                username: loginForm.elements.username.value.trim(),
+                password: loginForm.elements.password.value
+            };
+
+            try {
+                const { ok, result } = await sendRequest(
+                    '/api/login',
+                    data
+                );
+
+                loginMessage.style.color = ok ? 'green' : 'red';
+
+                if (ok) {
+                    loginMessage.textContent =
+                        result.message + ' Welcome, ' + result.username + '!';
+
+                    loginForm.elements.password.value = '';
+                } else {
+                    loginMessage.textContent = result.message;
+                }
+            } catch (error) {
+                loginMessage.style.color = 'red';
+                loginMessage.textContent =
+                    'Unable to sign in. Check the server.';
+            } finally {
+                button.disabled = false;
+            }
+        });
+    // tap search list
+document.getElementById('show-search').addEventListener('click', () => {
+    showPanel('search');
+});
+
+const searchForm = document.getElementById('search-form');
+const nameSearchForm = document.getElementById('name-search-form');
+
+const searchMessage = document.getElementById('search-message');
+const searchTable = document.getElementById('search-table');
+const searchResults = document.getElementById('search-results');
+
+// clear previous search results
+function clearSearchResults() {
+    searchResults.replaceChildren();
+    searchTable.hidden = true;
+}
+
+// shared result table for both queries
+function displayUsers(users) {
+    users.forEach((user) => {
+        const row = document.createElement('tr');
+
+        const values = [
+            user.username,
+            user.firstname,
+            user.lastname,
+            user.salary,
+            user.age,
+            user.registerday,
+            user.signintime ?? 'Never signed in'
+        ];
+
+        values.forEach((value) => {
+            const cell = document.createElement('td');
+            cell.textContent = String(value);
+            row.appendChild(cell);
+        });
+
+        searchResults.appendChild(row);
+    });
+
+    searchTable.hidden = users.length === 0;
+}
+
+// send query and show results
+async function runUserSearch(endpoint, parameters) {
+    clearSearchResults();
+
+    searchMessage.style.color = '#333';
+    searchMessage.textContent = 'Searching...';
+
+    // temporarily disable both submit buttons during query 
+    const buttons = [
+        searchForm.querySelector('button[type="submit"]'),
+        nameSearchForm.querySelector('button[type="submit"]')
+    ];
+
+    buttons.forEach((button) => {
+        button.disabled = true;
+    });
+
+    try {
+        const query = new URLSearchParams(parameters);
+        const response = await fetch(endpoint + '?' + query.toString());
+        const result = await response.json();
+
+        if (!response.ok) {
+            searchMessage.style.color = 'red';
+            searchMessage.textContent = result.message;
+            return;
+        }
+
+        searchMessage.textContent =
+            result.message + ' Results: ' + result.users.length;
+
+        displayUsers(result.users);
+    } catch (error) {
+        searchMessage.style.color = 'red';
+        searchMessage.textContent =
+            'Unable to search. Check the server.';
+    } finally {
+        buttons.forEach((button) => {
+            button.disabled = false;
+        });
+    }
+}
+
+// search by username
+searchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const username = searchForm.elements.username.value.trim();
+
+    if (username === '') {
+        clearSearchResults();
+        searchMessage.style.color = 'red';
+        searchMessage.textContent = 'Please enter a username.';
+        return;
+    }
+
+    await runUserSearch('/api/users/by-username', {
+        username: username
+    });
+});
+
+// search by name
+nameSearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const firstname = nameSearchForm.elements.firstname.value.trim();
+    const lastname = nameSearchForm.elements.lastname.value.trim();
+
+    if (firstname === '' && lastname === '') {
+        clearSearchResults();
+        searchMessage.style.color = 'red';
+        searchMessage.textContent =
+            'Please enter a first name or last name.';
+        return;
+    }
+
+    await runUserSearch('/api/users/by-name', {
+        firstname: firstname,
+        lastname: lastname
+    });
+});
+    </script>
+</body>
+</html>

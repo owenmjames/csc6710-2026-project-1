@@ -124,13 +124,6 @@ th {
             >
                 Sign In
             </button>
-            <button
-                id="show-search"
-                type="button"
-                aria-pressed="false"
->
-                Search Users
-            </button>
         </div>
 
         <!-- register area -->
@@ -244,75 +237,6 @@ th {
                 aria-live="polite"
             ></p>
         </section>
-    <!-- users search area -->
-<section id="search-section" hidden>
-    <h2>Search by Username</h2>
-
-    <form id="search-form">
-        <label for="search-username">Username</label>
-        <input
-            id="search-username"
-            name="username"
-            type="text"
-            maxlength="50"
-            placeholder="For example: John"
-            required
-        >
-
-        <button type="submit">Search</button>
-    </form>
-        <hr>
-
-<h2>Search by Name</h2>
-
-<form id="name-search-form">
-    <label for="search-firstname">First Name</label>
-    <input
-        id="search-firstname"
-        name="firstname"
-        type="text"
-        maxlength="50"
-        placeholder="For example: John"
-    >
-
-    <label for="search-lastname">Last Name</label>
-    <input
-        id="search-lastname"
-        name="lastname"
-        type="text"
-        maxlength="50"
-        placeholder="For example: Smith"
-    >
-
-    <p>Enter a first name, a last name, or both.</p>
-
-    <button type="submit">Search by Name</button>
-</form>
-    <p
-        id="search-message"
-        class="message"
-        role="status"
-        aria-live="polite"
-    ></p>
-
-    <div style="overflow-x: auto;">
-        <table id="search-table" hidden>
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>First Name</th>
-                    <th>Last Name</th>
-                    <th>Salary</th>
-                    <th>Age</th>
-                    <th>Registration Date</th>
-                    <th>Last Sign In</th>
-                </tr>
-            </thead>
-
-            <tbody id="search-results"></tbody>
-        </table>
-    </div>
-</section>
     </main>
 
     <script>
@@ -330,7 +254,7 @@ th {
        
         // show response area according the name
 function showPanel(panel) {
-    const panels = ['register', 'login', 'search'];
+    const panels = ['register', 'login'];
 
     panels.forEach((name) => {
         const section = document.getElementById(name + '-section');
@@ -464,132 +388,6 @@ function showPanel(panel) {
                 button.disabled = false;
             }
         });
-    // tap search list
-document.getElementById('show-search').addEventListener('click', () => {
-    showPanel('search');
-});
-
-const searchForm = document.getElementById('search-form');
-const nameSearchForm = document.getElementById('name-search-form');
-
-const searchMessage = document.getElementById('search-message');
-const searchTable = document.getElementById('search-table');
-const searchResults = document.getElementById('search-results');
-
-// clear previous search results
-function clearSearchResults() {
-    searchResults.replaceChildren();
-    searchTable.hidden = true;
-}
-
-// shared result table for both queries
-function displayUsers(users) {
-    users.forEach((user) => {
-        const row = document.createElement('tr');
-
-        const values = [
-            user.username,
-            user.firstname,
-            user.lastname,
-            user.salary,
-            user.age,
-            user.registerday,
-            user.signintime ?? 'Never signed in'
-        ];
-
-        values.forEach((value) => {
-            const cell = document.createElement('td');
-            cell.textContent = String(value);
-            row.appendChild(cell);
-        });
-
-        searchResults.appendChild(row);
-    });
-
-    searchTable.hidden = users.length === 0;
-}
-
-// send query and show results
-async function runUserSearch(endpoint, parameters) {
-    clearSearchResults();
-
-    searchMessage.style.color = '#333';
-    searchMessage.textContent = 'Searching...';
-
-    // temporarily disable both submit buttons during query 
-    const buttons = [
-        searchForm.querySelector('button[type="submit"]'),
-        nameSearchForm.querySelector('button[type="submit"]')
-    ];
-
-    buttons.forEach((button) => {
-        button.disabled = true;
-    });
-
-    try {
-        const query = new URLSearchParams(parameters);
-        const response = await fetch(endpoint + '?' + query.toString());
-        const result = await response.json();
-
-        if (!response.ok) {
-            searchMessage.style.color = 'red';
-            searchMessage.textContent = result.message;
-            return;
-        }
-
-        searchMessage.textContent =
-            result.message + ' Results: ' + result.users.length;
-
-        displayUsers(result.users);
-    } catch (error) {
-        searchMessage.style.color = 'red';
-        searchMessage.textContent =
-            'Unable to search. Check the server.';
-    } finally {
-        buttons.forEach((button) => {
-            button.disabled = false;
-        });
-    }
-}
-
-// search by username
-searchForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const username = searchForm.elements.username.value.trim();
-
-    if (username === '') {
-        clearSearchResults();
-        searchMessage.style.color = 'red';
-        searchMessage.textContent = 'Please enter a username.';
-        return;
-    }
-
-    await runUserSearch('/api/users/by-username', {
-        username: username
-    });
-});
-
-// search by name
-nameSearchForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const firstname = nameSearchForm.elements.firstname.value.trim();
-    const lastname = nameSearchForm.elements.lastname.value.trim();
-
-    if (firstname === '' && lastname === '') {
-        clearSearchResults();
-        searchMessage.style.color = 'red';
-        searchMessage.textContent =
-            'Please enter a first name or last name.';
-        return;
-    }
-
-    await runUserSearch('/api/users/by-name', {
-        firstname: firstname,
-        lastname: lastname
-    });
-});
     </script>
 </body>
 </html>
