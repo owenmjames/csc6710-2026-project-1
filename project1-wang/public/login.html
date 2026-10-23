@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 1 - Sign In</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f5f7;
+            margin: 0;
+            padding: 30px 16px;
+        }
+
+        main {
+            max-width: 440px;
+            margin: auto;
+            background: white;
+            padding: 28px;
+            border-radius: 12px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 12px;
+            background: #205bc2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Sign In</h1>
+
+        <form id="login-form">
+            <label for="username">Username</label>
+            <input
+                id="username"
+                name="username"
+                type="text"
+                maxlength="50"
+                autocomplete="username"
+                required
+            >
+
+            <label for="password">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
+
+            <button id="login-button" type="submit">
+                Sign In
+            </button>
+        </form>
+
+        <p id="message" role="status" aria-live="polite"></p>
+
+        <p><a href="/">Create an account</a></p>
+    </main>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const button = document.getElementById('login-button');
+        const message = document.getElementById('message');
+
+        form.addEventListener('submit', async (event) => {
+            
+            event.preventDefault();
+
+            button.disabled = true;
+            message.style.color = '#333';
+            message.textContent = 'Signing in...';
+
+            const data = {
+                username: form.elements.username.value.trim(),
+                password: form.elements.password.value
+            };
+
+            try {
+                
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const contentType =
+                    response.headers.get('content-type') || '';
+
+                if (!contentType.includes('application/json')) {
+                    throw new Error('Unexpected server response');
+                }
+
+                const result = await response.json();
+
+                message.style.color = response.ok ? 'green' : 'red';
+
+                if (response.ok) {
+                    message.textContent =
+                        result.message + ' Welcome, ' + result.username + '!';
+
+                    form.elements.password.value = '';
+                } else {
+                    message.textContent = result.message;
+                }
+            } catch (error) {
+                message.style.color = 'red';
+                message.textContent =
+                    'Unable to sign in. Check the server and /api/login route.';
+            } finally {
+                button.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
