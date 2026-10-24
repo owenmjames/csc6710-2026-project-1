@@ -191,6 +191,18 @@ app.post('/api/login', async (req, res) => {
         });
     }
 });
+
+// logout route
+app.post('/api/logout', (req, res) => {
+    req.session.destroy((error) => {
+        if (error) { return res.status(500).json({ message: 'Unable to log out' }) }
+        res.clearCookie('connect.sid');
+        res.json({ message: 'Logged out successfully' })
+    })
+}
+
+);
+
 // search with users
 app.get('/api/users/by-username', async (req, res) => {
     if (!req.session.username) {
