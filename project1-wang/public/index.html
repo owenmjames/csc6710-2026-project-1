@@ -377,9 +377,10 @@ function showPanel(panel) {
                         result.message + ' Welcome, ' + result.username + '!';
 
                     loginForm.elements.password.value = '';
+                    window.location.assign('/search');
                 } else {
                     loginMessage.textContent = result.message;
-                }
+                } 
             } catch (error) {
                 loginMessage.style.color = 'red';
                 loginMessage.textContent =

@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const pool = require('./db');
 const bcrypt = require('bcryptjs');
+const session = require('express-session')
 
 const app = express();
 const port = Number(process.env.PORT) || 5050;
@@ -9,9 +10,14 @@ const port = Number(process.env.PORT) || 5050;
 
 app.use(express.json());
 
+app.use(session({secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false, cookie: {httpOnly: true, secure: false}}));
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+app.get('/search', (req, res) => {
+    if (!req.session.username) { return res.redirect('/') }
+    return res.sendFile(path.join(__dirname, '..', "private/search.html"))
+});
 
 app.get('/api/health', (req, res) => {
     res.json({ message: 'Backend is running!' });
@@ -157,10 +163,26 @@ app.post('/api/login', async (req, res) => {
             [user.username]
         );
 
-        return res.json({
-            message: 'Sign in successful!',
-            username: user.username
+        req.session.regenerate((error) => {
+            if (error) {
+                return res.status(500).json({
+                    message: 'Unable to start session.'
+                });
+            }
+            req.session.username = user.username;
+            req.session.save((error) => {
+                if (error) {
+                    return res.status(500).json({
+                        message: 'Unable to start session.'
+                    })
+                } return res.json({
+                    message: 'Sign in successful!',
+                    username: user.username
+                });
+            });
         });
+
+
     } catch (error) {
         console.error('Sign in failed:', error.message);
 
@@ -171,6 +193,12 @@ app.post('/api/login', async (req, res) => {
 });
 // search with users
 app.get('/api/users/by-username', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in to search.'
+        });
+    }
+
     const username = req.query.username;
 
     if (
@@ -208,6 +236,11 @@ app.get('/api/users/by-username', async (req, res) => {
 });
 // 按名字、姓氏或完整姓名查询
 app.get('/api/users/by-name', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in to search.'
+        });
+    }
     const firstname = req.query.firstname ?? '';
     const lastname = req.query.lastname ?? '';
 
