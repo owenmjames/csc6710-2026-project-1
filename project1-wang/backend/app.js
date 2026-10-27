@@ -441,8 +441,61 @@ app.get('/api/users/by-age', async (req, res) => {
         return res.status(500).json({
             message: 'Age search failed. Please try again.'
         });
+    }});
+//Search users registered after given username
+app.get('/api/users/registered-after', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in first.'
+        });
     }
-});
+
+    const username = req.query.username;
+
+    if (
+        typeof username !== 'string' ||
+        username.trim() === '' ||
+        username.trim().length > 50
+    ) {
+        return res.status(400).json({
+            message: 'Please enter a username of up to 50 characters.'
+        });
+    }
+
+    try {
+        const [referenceRows] = await pool.execute(
+            'SELECT registerday FROM users WHERE username = ?',
+            [username.trim()]
+        );
+
+        if (referenceRows.length === 0) { return res.status(404).json({ message: "Reference username not found." }); }
+
+        const [rows] = await pool.execute(
+            `SELECT username, firstname, lastname, salary, age, registerday, signintime
+            FROM users
+            WHERE registerday > (SELECT registerday
+	            FROM users
+	            WHERE username = ?)
+            ORDER by registerday, username;`,
+            [username.trim()]
+        );
+
+        return res.json({
+            message: rows.length > 0
+                ? 'User found.'
+                : 'No users registered after this user.',
+            users: rows
+        });
+    } catch (error) {
+        console.error('User search failed:', error.message);
+
+        return res.status(500).json({
+            message: 'User search failed. Please try again.'
+        });
+    }
+}
+);
+
 async function startServer() {
     try {
         await pool.execute('SELECT 1');
