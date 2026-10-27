@@ -121,6 +121,7 @@ th {
     <option value="age">Age</option>
     <option value="registered-after">User Registered After</option>
     <option value="never-signed-in">Never Signed In</option>
+    <option value="registered-same-day">Registered on Same Day</option>
 </select>
 <section id="username-search-panel">
     <h2>Search by Username</h2>
@@ -235,6 +236,25 @@ th {
     <button type="submit">Search by Age</button>
 </form>
 </section>
+<section id="registered-same-day-search-panel" hidden>
+    <h2>Users Registered on the Same Day</h2>
+
+    <form id="same-day-search-form">
+        <label for="same-day-username">Reference Username</label>
+        <input
+            id="same-day-username"
+            name="username"
+            type="text"
+            maxlength="50"
+            placeholder="For example: John"
+            required
+        >
+
+        <p>Find users registered on the same date as this user.</p>
+
+        <button type="submit">Search Same Day</button>
+    </form>
+</section>
 <section id="never-signed-in-search-panel" hidden>
     <h2>Search Users Who Have Never Signed In</h2>
 
@@ -295,6 +315,7 @@ const salarySearchForm = document.getElementById('salary-search-form');
 const ageSearchForm = document.getElementById('age-search-form');
 const registeredAfterForm = document.getElementById('registered-after-form');
 const neverSignedInForm = document.getElementById('never-signed-in-form');
+const sameDaySearchForm = document.getElementById('same-day-search-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
@@ -305,9 +326,9 @@ const searchTypes = [
     'salary',
     'age',
     'registered-after',
-    'never-signed-in'
+    'never-signed-in',
+    'registered-same-day'
 ];
-
 // search panel script
     function showSearchPanel() {
         searchTypes.forEach(
@@ -378,7 +399,8 @@ async function runUserSearch(endpoint, parameters) {
     salarySearchForm.querySelector('button[type="submit"]'),
     ageSearchForm.querySelector('button[type="submit"]'),
     registeredAfterForm.querySelector('button[type="submit"]'),
-    neverSignedInForm.querySelector('button[type="submit"]')
+    neverSignedInForm.querySelector('button[type="submit"]'),
+    sameDaySearchForm.querySelector('button[type="submit"]')
 ];
 
     buttons.forEach((button) => {
@@ -533,6 +555,22 @@ neverSignedInForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     await runUserSearch('/api/users/never-signed-in', {});
+});
+sameDaySearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const username = sameDaySearchForm.elements.username.value.trim();
+
+    if (username === '') {
+        clearSearchResults();
+        searchMessage.style.color = 'red';
+        searchMessage.textContent = 'Please enter a reference username.';
+        return;
+    }
+
+    await runUserSearch('/api/users/registered-same-day', {
+        username: username
+    });
 });
     </script>
 </body>

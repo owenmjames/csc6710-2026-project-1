@@ -31,7 +31,7 @@ app.post('/api/register', async (req, res) => {
         firstname,
         lastname,
         salary,
-        age
+       ge
     } = req.body || {};
 
     
@@ -520,6 +520,57 @@ app.get('/api/users/never-signed-in', async (req, res) => {
         });
     } catch (error) {
         console.error('Never-signed-in search failed:', error.message);
+
+        return res.status(500).json({
+            message: 'Search failed. Please try again.'
+        });
+    }
+});
+// Search users registered on the same date as a reference user
+app.get('/api/users/registered-same-day', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in first.'
+        });
+    }
+
+    const username = String(req.query.username || '').trim();
+
+    if (username === '' || username.length > 50) {
+        return res.status(400).json({
+            message: 'Please enter a username of up to 50 characters.'
+        });
+    }
+
+    try {
+        // Find the reference user's registration date
+        const [referenceUsers] = await pool.execute(
+            'SELECT registerday FROM users WHERE username = ?',
+            [username]
+        );
+
+        if (referenceUsers.length === 0) {
+            return res.status(404).json({
+                message: 'Reference user not found.'
+            });
+        }
+
+        // Find users with the same registration date
+        const [users] = await pool.execute(
+            `SELECT username, firstname, lastname,
+                    salary, age, registerday, signintime
+             FROM users
+             WHERE registerday = ?
+             ORDER BY username`,
+            [referenceUsers[0].registerday]
+        );
+
+        return res.json({
+            message: 'Users registered on the same date found.',
+            users: users
+        });
+    } catch (error) {
+        console.error('Same-day search failed:', error.message);
 
         return res.status(500).json({
             message: 'Search failed. Please try again.'
