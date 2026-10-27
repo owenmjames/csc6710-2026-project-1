@@ -495,7 +495,37 @@ app.get('/api/users/registered-after', async (req, res) => {
     }
 }
 );
+// Search users who have never signed in.
+app.get('/api/users/never-signed-in', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in first.'
+        });
+    }
 
+    try {
+        const [users] = await pool.execute(
+            `SELECT username, firstname, lastname,
+                    salary, age, registerday, signintime
+             FROM users
+             WHERE signintime IS NULL
+             ORDER BY username`
+        );
+
+        return res.json({
+            message: users.length > 0
+                ? 'Users who have never signed in found.'
+                : 'No users who have never signed in found.',
+            users
+        });
+    } catch (error) {
+        console.error('Never-signed-in search failed:', error.message);
+
+        return res.status(500).json({
+            message: 'Search failed. Please try again.'
+        });
+    }
+});
 async function startServer() {
     try {
         await pool.execute('SELECT 1');

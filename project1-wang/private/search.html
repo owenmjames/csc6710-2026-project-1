@@ -120,6 +120,7 @@ th {
     <option value="salary">Salary</option>
     <option value="age">Age</option>
     <option value="registered-after">User Registered After</option>
+    <option value="never-signed-in">Never Signed In</option>
 </select>
 <section id="username-search-panel">
     <h2>Search by Username</h2>
@@ -234,7 +235,14 @@ th {
     <button type="submit">Search by Age</button>
 </form>
 </section>
+<section id="never-signed-in-search-panel" hidden>
+    <h2>Search Users Who Have Never Signed In</h2>
 
+    <form id="never-signed-in-form">
+        <p>Find registered users who have never logged in.</p>
+        <button type="submit">Search Never Signed In</button>
+    </form>
+</section>
 <section id="registered-after-search-panel">
     <h2>Search User Registered after Reference User</h2>
 
@@ -286,11 +294,19 @@ const nameSearchForm = document.getElementById('name-search-form');
 const salarySearchForm = document.getElementById('salary-search-form');
 const ageSearchForm = document.getElementById('age-search-form');
 const registeredAfterForm = document.getElementById('registered-after-form');
+const neverSignedInForm = document.getElementById('never-signed-in-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
 const searchType = document.getElementById('search-type');
-const searchTypes = ['username', 'name', 'salary', 'age', 'registered-after'];
+const searchTypes = [
+    'username',
+    'name',
+    'salary',
+    'age',
+    'registered-after',
+    'never-signed-in'
+];
 
 // search panel script
     function showSearchPanel() {
@@ -361,7 +377,8 @@ async function runUserSearch(endpoint, parameters) {
     nameSearchForm.querySelector('button[type="submit"]'),
     salarySearchForm.querySelector('button[type="submit"]'),
     ageSearchForm.querySelector('button[type="submit"]'),
-    registeredAfterForm.querySelector('button[type="submit"]')
+    registeredAfterForm.querySelector('button[type="submit"]'),
+    neverSignedInForm.querySelector('button[type="submit"]')
 ];
 
     buttons.forEach((button) => {
@@ -510,6 +527,12 @@ registeredAfterForm.addEventListener('submit', async (event) => {
     await runUserSearch('/api/users/registered-after', {username: username
 
     })
+});
+// Search users who have never signed in.
+neverSignedInForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    await runUserSearch('/api/users/never-signed-in', {});
 });
     </script>
 </body>
