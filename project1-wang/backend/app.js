@@ -203,7 +203,7 @@ app.post('/api/logout', (req, res) => {
 
 );
 
-// search with users
+// search by users
 app.get('/api/users/by-username', async (req, res) => {
     if (!req.session.username) {
         return res.status(401).json({
@@ -246,7 +246,7 @@ app.get('/api/users/by-username', async (req, res) => {
         });
     }
 });
-// 按名字、姓氏或完整姓名查询
+// search by first or last or whole name
 app.get('/api/users/by-name', async (req, res) => {
     if (!req.session.username) {
         return res.status(401).json({
@@ -256,7 +256,7 @@ app.get('/api/users/by-name', async (req, res) => {
     const firstname = req.query.firstname ?? '';
     const lastname = req.query.lastname ?? '';
 
-    // 检查参数类型和长度
+    // check parameter types and lengths
     if (
         typeof firstname !== 'string' ||
         typeof lastname !== 'string' ||
@@ -271,7 +271,7 @@ app.get('/api/users/by-name', async (req, res) => {
     const first = firstname.trim();
     const last = lastname.trim();
 
-    // 至少填写一项
+    // at least fill one 
     if (first === '' && last === '') {
         return res.status(400).json({
             message: 'Please enter a first name or last name.'
@@ -313,6 +313,133 @@ app.get('/api/users/by-name', async (req, res) => {
 
         return res.status(500).json({
             message: 'Name search failed. Please try again.'
+        });
+    }
+});
+   // Search users by salary range.
+app.get('/api/users/by-salary', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in first.'
+        });
+    }
+
+    const { min, max } = req.query;
+
+    if (
+        typeof min !== 'string' ||
+        typeof max !== 'string' ||
+        min.trim() === '' ||
+        max.trim() === ''
+    ) {
+        return res.status(400).json({
+            message: 'Please enter both minimum and maximum salary.'
+        });
+    }
+
+    const minSalary = Number(min);
+    const maxSalary = Number(max);
+
+    if (
+        !Number.isFinite(minSalary) ||
+        !Number.isFinite(maxSalary) ||
+        minSalary < 0 ||
+        maxSalary < 0 ||
+        minSalary > 9999999999.99 ||
+        maxSalary > 9999999999.99
+    ) {
+        return res.status(400).json({
+            message: 'Enter salaries between 0 and 9999999999.99.'
+        });
+    }
+
+    if (minSalary > maxSalary) {
+        return res.status(400).json({
+            message: 'Minimum salary cannot exceed maximum salary.'
+        });
+    }
+
+    try {
+        const [users] = await pool.execute(
+            `SELECT username, firstname, lastname, salary,
+                    age, registerday, signintime
+             FROM users
+             WHERE salary BETWEEN ? AND ?
+             ORDER BY salary, username`,
+            [minSalary, maxSalary]
+        );
+
+        return res.json({
+            message: users.length > 0
+                ? 'Matching users found.'
+                : 'No matching users found.',
+            users
+        });
+    } catch (error) {
+        console.error('Salary search failed:', error);
+
+        return res.status(500).json({
+            message: 'Salary search failed. Please try again.'
+        });
+    }
+});
+// Search users by age range.
+app.get('/api/users/by-age', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in first.'
+        });
+    }
+
+    const { min, max } = req.query;
+
+    if (
+        typeof min !== 'string' ||
+        typeof max !== 'string' ||
+        min.trim() === '' ||
+        max.trim() === ''
+    ) {
+        return res.status(400).json({
+            message: 'Please enter both minimum and maximum age.'
+        });
+    }
+
+    const minAge = Number(min);
+    const maxAge = Number(max);
+
+    if (
+        !Number.isInteger(minAge) ||
+        !Number.isInteger(maxAge) ||
+        minAge < 0 ||
+        maxAge > 150 ||
+        minAge > maxAge
+    ) {
+        return res.status(400).json({
+            message: 'Enter whole ages from 0 to 150. Minimum cannot exceed maximum.'
+        });
+    }
+
+    try {
+        const [users] = await pool.execute(
+            `SELECT username, firstname, lastname, salary,
+                    age, registerday, signintime
+             FROM users
+             WHERE age BETWEEN ? AND ?
+             ORDER BY age, username`,
+            [minAge, maxAge]
+        );
+
+        return res.json({
+            message: users.length > 0
+                ? 'Matching users found.'
+                : 'No matching users found.',
+            users
+        });
+    } catch (error) {
+        console.error('Age search failed:', error);
+
+        return res.status(500).json({
+            message: 'Age search failed. Please try again.'
         });
     }
 });
