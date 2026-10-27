@@ -137,7 +137,6 @@ th {
         <button type="submit">Search</button>
     </form>
 </section>
-        <hr>
 
 <section id="name-search-panel">
 <h2>Search by Name</h2>
@@ -166,7 +165,6 @@ th {
     <button type="submit">Search by Name</button>
 </form>
 </section>
-<hr>
 
 <section id="salary-search-panel">
 <h2>Search by Salary Range</h2>
@@ -201,7 +199,6 @@ th {
     <button type="submit">Search by Salary</button>
 </form>
 </section>
-<hr>
 
 <section id="age-search-panel">
 <h2>Search by Age Range</h2>
@@ -272,7 +269,21 @@ const ageSearchForm = document.getElementById('age-search-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
-const searchType = document.getElementById('search-type')
+const searchType = document.getElementById('search-type');
+const searchTypes = ['username', 'name', 'salary', 'age'];
+
+// search panel script
+    function showSearchPanel() {
+        searchTypes.forEach(
+            (name) => {
+                const panel = document.getElementById(name + '-search-panel');
+                panel.hidden = name !== searchType.value;
+            }
+        );
+    }
+
+    searchType.addEventListener('change', showSearchPanel);
+    showSearchPanel();
 
     // logout button script
     const logoutButton = document.getElementById('logout-button');
