@@ -119,6 +119,7 @@ th {
     <option value="name">Name</option>
     <option value="salary">Salary</option>
     <option value="age">Age</option>
+    <option value="registered-after">User Registered After</option>
 </select>
 <section id="username-search-panel">
     <h2>Search by Username</h2>
@@ -233,6 +234,24 @@ th {
     <button type="submit">Search by Age</button>
 </form>
 </section>
+
+<section id="registered-after-search-panel">
+    <h2>Search User Registered after Reference User</h2>
+
+    <form id="registered-after-form">
+        <label for="reference-username">Username</label>
+        <input
+            id="reference-username"
+            name="username"
+            type="text"
+            maxlength="50"
+            placeholder="For example: John"
+            required
+        >
+
+        <button type="submit">Search User Registered After...</button>
+    </form>
+</section>
     <p
         id="search-message"
         class="message"
@@ -266,11 +285,12 @@ const searchForm = document.getElementById('search-form');
 const nameSearchForm = document.getElementById('name-search-form');
 const salarySearchForm = document.getElementById('salary-search-form');
 const ageSearchForm = document.getElementById('age-search-form');
+const registeredAfterForm = document.getElementById('registered-after-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
 const searchType = document.getElementById('search-type');
-const searchTypes = ['username', 'name', 'salary', 'age'];
+const searchTypes = ['username', 'name', 'salary', 'age', 'registered-after'];
 
 // search panel script
     function showSearchPanel() {
@@ -340,7 +360,8 @@ async function runUserSearch(endpoint, parameters) {
     searchForm.querySelector('button[type="submit"]'),
     nameSearchForm.querySelector('button[type="submit"]'),
     salarySearchForm.querySelector('button[type="submit"]'),
-    ageSearchForm.querySelector('button[type="submit"]')
+    ageSearchForm.querySelector('button[type="submit"]'),
+    registeredAfterForm.querySelector('button[type="submit"]')
 ];
 
     buttons.forEach((button) => {
@@ -475,6 +496,21 @@ ageSearchForm.addEventListener('submit', async (event) => {
         max: max
     });
 });  
+
+// Search registered after
+registeredAfterForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const username = registeredAfterForm.elements.username.value.trim();
+    if (username === '') {clearSearchResults();
+        searchMessage.style.color = 'red';
+        searchMessage.textContent =
+            'Enter a username';
+        return;}
+    
+    await runUserSearch('/api/users/registered-after', {username: username
+
+    })
+});
     </script>
 </body>
 </html>
