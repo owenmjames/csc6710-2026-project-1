@@ -7,6 +7,6 @@ How to setup the Database: Import database/schema.sql through phpMyAdmin, which 
 
 Environment setup: Create a file titled ".env" in the project1-wang directory and list out  DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, PORT, and SESSION_SECRET, using placeholder ceredentials when appropriate.
 
-To run: in your terminal in the project1-wang directory, run npm ci, node backend/check-db.js, and node backend/app.js. Open http://127.0.0.1:5050/. To stop simply hit Ctrl+C.
+To run: in your terminal in the project1-wang directory, pass the following command: "npm ci; node backend/check-db.js; node backend/app.js". Open http://127.0.0.1:5050/. To stop simply hit Ctrl+C.
 
 Work in progress: Missing salary, age, date-related searches; logout error handling; browser back/cache behavior.
