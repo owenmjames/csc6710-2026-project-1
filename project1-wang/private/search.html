@@ -111,6 +111,16 @@ th {
         </button>
     <!-- users search area -->
 <section id="search-section">
+
+<label for="search-type">Search type</label>
+
+<select id="search-type">
+    <option value="username">Username</option>
+    <option value="name">Name</option>
+    <option value="salary">Salary</option>
+    <option value="age">Age</option>
+</select>
+<section id="username-search-panel">
     <h2>Search by Username</h2>
 
     <form id="search-form">
@@ -126,8 +136,10 @@ th {
 
         <button type="submit">Search</button>
     </form>
+</section>
         <hr>
 
+<section id="name-search-panel">
 <h2>Search by Name</h2>
 
 <form id="name-search-form">
@@ -153,8 +165,10 @@ th {
 
     <button type="submit">Search by Name</button>
 </form>
+</section>
 <hr>
 
+<section id="salary-search-panel">
 <h2>Search by Salary Range</h2>
 
 <form id="salary-search-form">
@@ -186,8 +200,10 @@ th {
 
     <button type="submit">Search by Salary</button>
 </form>
+</section>
 <hr>
 
+<section id="age-search-panel">
 <h2>Search by Age Range</h2>
 
 <form id="age-search-form">
@@ -219,6 +235,7 @@ th {
 
     <button type="submit">Search by Age</button>
 </form>
+</section>
     <p
         id="search-message"
         class="message"
@@ -255,6 +272,7 @@ const ageSearchForm = document.getElementById('age-search-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
+const searchType = document.getElementById('search-type')
 
     // logout button script
     const logoutButton = document.getElementById('logout-button');
