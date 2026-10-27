@@ -111,6 +111,16 @@ th {
         </button>
     <!-- users search area -->
 <section id="search-section">
+
+<label for="search-type">Search type</label>
+
+<select id="search-type">
+    <option value="username">Username</option>
+    <option value="name">Name</option>
+    <option value="salary">Salary</option>
+    <option value="age">Age</option>
+</select>
+<section id="username-search-panel">
     <h2>Search by Username</h2>
 
     <form id="search-form">
@@ -126,8 +136,9 @@ th {
 
         <button type="submit">Search</button>
     </form>
-        <hr>
+</section>
 
+<section id="name-search-panel">
 <h2>Search by Name</h2>
 
 <form id="name-search-form">
@@ -153,6 +164,75 @@ th {
 
     <button type="submit">Search by Name</button>
 </form>
+</section>
+
+<section id="salary-search-panel">
+<h2>Search by Salary Range</h2>
+
+<form id="salary-search-form">
+    <label for="min-salary">Minimum Salary</label>
+    <input
+        id="min-salary"
+        name="min"
+        type="number"
+        min="0"
+        max="9999999999.99"
+        step="0.01"
+        placeholder="For example: 40000"
+        required
+    >
+
+    <label for="max-salary">Maximum Salary</label>
+    <input
+        id="max-salary"
+        name="max"
+        type="number"
+        min="0"
+        max="9999999999.99"
+        step="0.01"
+        placeholder="For example: 50000"
+        required
+    >
+
+    <p>Both minimum and maximum salaries are included.</p>
+
+    <button type="submit">Search by Salary</button>
+</form>
+</section>
+
+<section id="age-search-panel">
+<h2>Search by Age Range</h2>
+
+<form id="age-search-form">
+    <label for="min-age">Minimum Age</label>
+    <input
+        id="min-age"
+        name="min"
+        type="number"
+        min="0"
+        max="150"
+        step="1"
+        placeholder="For example: 20"
+        required
+    >
+
+    <label for="max-age">Maximum Age</label>
+    <input
+        id="max-age"
+        name="max"
+        type="number"
+        min="0"
+        max="150"
+        step="1"
+        placeholder="For example: 30"
+        required
+    >
+
+    <p>Both minimum and maximum ages are included.</p>
+
+    <button type="submit">Search by Age</button>
+</form>
+</section>
     <p
         id="search-message"
         class="message"
@@ -184,10 +264,26 @@ th {
     // tap search list
 const searchForm = document.getElementById('search-form');
 const nameSearchForm = document.getElementById('name-search-form');
-
+const salarySearchForm = document.getElementById('salary-search-form');
+const ageSearchForm = document.getElementById('age-search-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
+const searchType = document.getElementById('search-type');
+const searchTypes = ['username', 'name', 'salary', 'age'];
+
+// search panel script
+    function showSearchPanel() {
+        searchTypes.forEach(
+            (name) => {
+                const panel = document.getElementById(name + '-search-panel');
+                panel.hidden = name !== searchType.value;
+            }
+        );
+    }
+
+    searchType.addEventListener('change', showSearchPanel);
+    showSearchPanel();
 
     // logout button script
     const logoutButton = document.getElementById('logout-button');
@@ -241,9 +337,11 @@ async function runUserSearch(endpoint, parameters) {
 
     // temporarily disable both submit buttons during query 
     const buttons = [
-        searchForm.querySelector('button[type="submit"]'),
-        nameSearchForm.querySelector('button[type="submit"]')
-    ];
+    searchForm.querySelector('button[type="submit"]'),
+    nameSearchForm.querySelector('button[type="submit"]'),
+    salarySearchForm.querySelector('button[type="submit"]'),
+    ageSearchForm.querySelector('button[type="submit"]')
+];
 
     buttons.forEach((button) => {
         button.disabled = true;
@@ -313,6 +411,70 @@ nameSearchForm.addEventListener('submit', async (event) => {
         lastname: lastname
     });
 });
+ // Search by salary range.
+salarySearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const min = salarySearchForm.elements.min.value.trim();
+    const max = salarySearchForm.elements.max.value.trim();
+
+    const minSalary = Number(min);
+    const maxSalary = Number(max);
+
+    if (
+        min === '' ||
+        max === '' ||
+        !Number.isFinite(minSalary) ||
+        !Number.isFinite(maxSalary) ||
+        minSalary < 0 ||
+        maxSalary < 0 ||
+        minSalary > 9999999999.99 ||
+        maxSalary > 9999999999.99 ||
+        minSalary > maxSalary
+    ) {
+        clearSearchResults();
+        searchMessage.style.color = 'red';
+        searchMessage.textContent =
+            'Enter a valid salary range. Minimum cannot exceed maximum.';
+        return;
+    }
+
+    await runUserSearch('/api/users/by-salary', {
+        min: min,
+        max: max
+    });
+}); 
+// Search by age range.
+ageSearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const min = ageSearchForm.elements.min.value.trim();
+    const max = ageSearchForm.elements.max.value.trim();
+
+    const minAge = Number(min);
+    const maxAge = Number(max);
+
+    if (
+        min === '' ||
+        max === '' ||
+        !Number.isInteger(minAge) ||
+        !Number.isInteger(maxAge) ||
+        minAge < 0 ||
+        maxAge > 150 ||
+        minAge > maxAge
+    ) {
+        clearSearchResults();
+        searchMessage.style.color = 'red';
+        searchMessage.textContent =
+            'Enter whole ages from 0 to 150. Minimum cannot exceed maximum.';
+        return;
+    }
+
+    await runUserSearch('/api/users/by-age', {
+        min: min,
+        max: max
+    });
+});  
     </script>
 </body>
 </html>
