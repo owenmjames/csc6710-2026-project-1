@@ -31,7 +31,7 @@ app.post('/api/register', async (req, res) => {
         firstname,
         lastname,
         salary,
-       ge
+        age
     } = req.body || {};
 
     

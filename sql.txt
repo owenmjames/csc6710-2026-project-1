@@ -1,0 +1,134 @@
+-- CSC6710 Project 1: SQL statements used by project1-wang
+-- Sources: project1-wang/database/schema.sql and backend/*.js.
+-- This file documents statements individually; it is not a bulk import script.
+-- Each ? is a prepared-statement placeholder. Node supplies values separately
+-- through mysql2 pool.execute(sql, parameters), in left-to-right order.
+-- To run a statement manually in phpMyAdmin, replace its placeholders with
+-- appropriate SQL literals (quote strings and dates; leave numbers unquoted).
+-- Password verification uses bcrypt in Node, not a SQL password comparison.
+-- Sessions and logout use server memory and do not execute SQL.
+
+-- Database and table setup (run once on a fresh database).
+CREATE DATABASE IF NOT EXISTS project1_wang
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+
+USE project1_wang;
+
+CREATE TABLE users (
+    username VARCHAR(50) PRIMARY KEY,
+    password VARCHAR(255) NOT NULL,
+    firstname VARCHAR(50) NOT NULL,
+    lastname VARCHAR(50) NOT NULL,
+    salary DECIMAL(12, 2) NOT NULL,
+    age INT NOT NULL,
+    registerday DATE NOT NULL,
+    signintime DATETIME DEFAULT NULL,
+    CONSTRAINT chk_salary CHECK (salary >= 0),
+    CONSTRAINT chk_age CHECK (age BETWEEN 0 AND 150)
+);
+
+-- 1. Register a user.
+-- Parameters: username, bcrypt password hash, first name, last name, salary, age.
+-- New users receive today's registration date and have never signed in.
+INSERT INTO users
+    (username, password, firstname, lastname,
+     salary, age, registerday, signintime)
+VALUES (?, ?, ?, ?, ?, ?, CURDATE(), NULL);
+
+-- 2. Sign in: retrieve the account and stored hash.
+-- Parameter: username. Node checks the entered password using bcrypt.compare.
+SELECT username, password
+FROM users
+WHERE username = ?;
+
+-- After a correct password, record the latest sign-in time.
+-- Parameter: verified username.
+UPDATE users SET signintime = NOW() WHERE username = ?;
+
+-- 3. Search by first and/or last name.
+-- The backend builds one of these three statements from the supplied fields.
+
+-- First name only. Parameter: first name.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE firstname = ?
+ORDER BY username;
+
+-- Last name only. Parameter: last name.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE lastname = ?
+ORDER BY username;
+
+-- Both names. Parameters: first name, last name.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE firstname = ? AND lastname = ?
+ORDER BY username;
+
+-- 4. Search by user ID (username is this application's primary key).
+-- Parameter: username.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE username = ?;
+
+-- 5. Search by salary range, including both endpoints.
+-- Parameters: minimum salary, maximum salary.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE salary BETWEEN ? AND ?
+ORDER BY salary, username;
+
+-- 6. Search by age range, including both endpoints.
+-- Parameters: minimum age, maximum age.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE age BETWEEN ? AND ?
+ORDER BY age, username;
+
+-- 7. Search users registered after a reference user (e.g. john).
+-- First check that the reference user exists. Parameter: reference username.
+-- Node returns a not-found response if this lookup produces no rows.
+SELECT registerday FROM users WHERE username = ?;
+
+-- Parameter: reference username.
+-- Strictly later calendar dates; registrations on the same date are excluded.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE registerday > (
+    SELECT registerday FROM users WHERE username = ?
+)
+ORDER BY registerday, username;
+
+-- 8. Search users who have never signed in. No parameters.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE signintime IS NULL
+ORDER BY username;
+
+-- 9. Search users registered on the same day as a reference user.
+-- First retrieve the reference date. Parameter: reference username.
+-- Node returns a not-found response if this lookup produces no rows.
+SELECT registerday FROM users WHERE username = ?;
+
+-- Parameter: registerday returned by the preceding lookup.
+-- Includes the reference user, who necessarily registered on that date.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE registerday = ?
+ORDER BY username;
+
+-- 10. Search users registered today, using the database server's current date.
+-- No parameters.
+SELECT username, firstname, lastname, salary, age, registerday, signintime
+FROM users
+WHERE registerday = CURDATE()
+ORDER BY username;
+
+-- Supporting checks (not assignment search features).
+-- Server startup: verify that a database query succeeds.
+SELECT 1;
+
+-- backend/check-db.js: check connectivity and count existing accounts.
+SELECT COUNT(*) AS total FROM users;
