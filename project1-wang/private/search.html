@@ -122,6 +122,7 @@ th {
     <option value="registered-after">User Registered After</option>
     <option value="never-signed-in">Never Signed In</option>
     <option value="registered-same-day">Registered on Same Day</option>
+    <option value="registered-today">Registered Today</option>
 </select>
 <section id="username-search-panel">
     <h2>Search by Username</h2>
@@ -235,6 +236,15 @@ th {
 
     <button type="submit">Search by Age</button>
 </form>
+</section> 
+<section id="registered-today-search-panel" hidden>
+    <h2>Users Registered Today</h2>
+
+    <form id="today-search-form">
+        <p>Find all users who registered today.</p>
+
+        <button type="submit">Search Registered Today</button>
+    </form>
 </section>
 <section id="registered-same-day-search-panel" hidden>
     <h2>Users Registered on the Same Day</h2>
@@ -316,6 +326,7 @@ const ageSearchForm = document.getElementById('age-search-form');
 const registeredAfterForm = document.getElementById('registered-after-form');
 const neverSignedInForm = document.getElementById('never-signed-in-form');
 const sameDaySearchForm = document.getElementById('same-day-search-form');
+const todaySearchForm = document.getElementById('today-search-form');
 const searchMessage = document.getElementById('search-message');
 const searchTable = document.getElementById('search-table');
 const searchResults = document.getElementById('search-results');
@@ -327,7 +338,8 @@ const searchTypes = [
     'age',
     'registered-after',
     'never-signed-in',
-    'registered-same-day'
+    'registered-same-day',
+    'registered-today'
 ];
 // search panel script
     function showSearchPanel() {
@@ -400,7 +412,8 @@ async function runUserSearch(endpoint, parameters) {
     ageSearchForm.querySelector('button[type="submit"]'),
     registeredAfterForm.querySelector('button[type="submit"]'),
     neverSignedInForm.querySelector('button[type="submit"]'),
-    sameDaySearchForm.querySelector('button[type="submit"]')
+    sameDaySearchForm.querySelector('button[type="submit"]'),
+    todaySearchForm.querySelector('button[type="submit"]')
 ];
 
     buttons.forEach((button) => {
@@ -571,6 +584,11 @@ sameDaySearchForm.addEventListener('submit', async (event) => {
     await runUserSearch('/api/users/registered-same-day', {
         username: username
     });
+});
+todaySearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    await runUserSearch('/api/users/registered-today', {});
 });
     </script>
 </body>

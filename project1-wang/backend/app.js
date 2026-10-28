@@ -577,6 +577,37 @@ app.get('/api/users/registered-same-day', async (req, res) => {
         });
     }
 });
+// Search users registered today
+app.get('/api/users/registered-today', async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).json({
+            message: 'Please sign in first.'
+        });
+    }
+
+    try {
+        const [users] = await pool.execute(
+            `SELECT username, firstname, lastname,
+                    salary, age, registerday, signintime
+             FROM users
+             WHERE registerday = CURDATE()
+             ORDER BY username`
+        );
+
+        return res.json({
+            message: users.length > 0
+                ? 'Users registered today found.'
+                : 'No users registered today.',
+            users: users
+        });
+    } catch (error) {
+        console.error('Registered-today search failed:', error.message);
+
+        return res.status(500).json({
+            message: 'Search failed. Please try again.'
+        });
+    }
+});
 async function startServer() {
     try {
         await pool.execute('SELECT 1');
